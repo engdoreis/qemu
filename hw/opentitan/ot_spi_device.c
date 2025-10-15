@@ -1909,7 +1909,7 @@ static MemTxResult ot_spi_device_buf_read_with_attrs(
     (void)attrs;
     uint32_t val32;
 
-    hwaddr last = (hwaddr)((uint32_t)addr + size - 1u);
+    hwaddr last = addr + (hwaddr)(size - 1u);
 
     if (addr < SPI_SRAM_INGRESS_OFFSET) {
         qemu_log_mask(LOG_GUEST_ERROR,
@@ -1964,7 +1964,7 @@ static MemTxResult ot_spi_device_buf_write_with_attrs(
     uint32_t pc = ibex_get_current_pc();
     trace_ot_spi_device_buf_write_in(s->ot_id, (uint32_t)addr, size, val32, pc);
 
-    hwaddr last = (hwaddr)((uint32_t)addr + size - 1u);
+    hwaddr last = addr + (hwaddr)(size - 1u);
 
     if (last >= SPI_SRAM_INGRESS_OFFSET) {
         qemu_log_mask(LOG_GUEST_ERROR,
