@@ -1,0 +1,1 @@
+/home/doreis/git/opentitan.git/ot-qemu/third_party/qemu/BUILD.qemu_opentitan.bazel

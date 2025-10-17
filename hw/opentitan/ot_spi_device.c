@@ -290,9 +290,6 @@ REG32(TPM_READ_FIFO, 0x34u)
 #define SPI_SRAM_TPM_READ_OFFSET (SPI_SRAM_SFDP_OFFSET + SPI_SRAM_SFDP_SIZE)
 #define SPI_SRAM_TPM_READ_SIZE   0x40u
 #define SPI_SRAM_INGRESS_OFFSET  0xE00u
-static_assert(SPI_SRAM_INGRESS_OFFSET >=
-                  (SPI_SRAM_TPM_READ_OFFSET + SPI_SRAM_TPM_READ_SIZE),
-              "SPI SRAM Egress buffers overflow into Ingress buffers");
 #define SPI_SRAM_PAYLOAD_OFFSET   SPI_SRAM_INGRESS_OFFSET
 #define SPI_SRAM_PAYLOAD_SIZE     0x100u
 #define SPI_SRAM_CMD_OFFSET       (SPI_SRAM_PAYLOAD_OFFSET + SPI_SRAM_PAYLOAD_SIZE)
@@ -303,12 +300,10 @@ static_assert(SPI_SRAM_INGRESS_OFFSET >=
 #define SPI_SRAM_TPM_WRITE_SIZE   0x40u
 #define SPI_SRAM_ADDR_END         (SPI_SRAM_TPM_WRITE_OFFSET + SPI_SRAM_TPM_WRITE_SIZE)
 #define SPI_SRAM_END_OFFSET       (SPI_SRAM_ADDR_END)
-static_assert(SPI_SRAM_END_OFFSET == 0xfc0u, "Invalid SRAM definition");
 #define SPI_DEVICE_SIZE            0x2000u
 #define SPI_DEVICE_SPI_REGS_OFFSET 0u
 #define SPI_DEVICE_TPM_REGS_OFFSET 0x800u
 #define SPI_DEVICE_SRAM_OFFSET     0x1000u
-
 
 #define SRAM_SIZE                 (PARAM_SRAM_DEPTH * sizeof(uint32_t))
 #define EGRESS_BUFFER_SIZE_BYTES  (PARAM_SRAM_EGRESS_DEPTH * sizeof(uint32_t))
@@ -353,6 +348,10 @@ static_assert((SPI_DEVICE_CMD_HW_STA_COUNT + SPI_DEVICE_CMD_SW_COUNT +
 static_assert(PARAM_NUM_CMD_INFO ==
                   SPI_DEVICE_CMD_HW_CFG_FIRST - SPI_DEVICE_CMD_HW_STA_FIRST,
               "Invalid command info definitions");
+static_assert(SPI_SRAM_INGRESS_OFFSET >=
+                  (SPI_SRAM_TPM_READ_OFFSET + SPI_SRAM_TPM_READ_SIZE),
+              "SPI SRAM Egress buffers overflow into Ingress buffers");
+static_assert(SPI_SRAM_END_OFFSET == 0xfc0u, "Invalid SRAM definition");
 
 #define TPM_OPCODE_READ_BIT  7u
 #define TPM_OPCODE_SIZE_MASK 0x3Fu
@@ -1910,7 +1909,7 @@ static MemTxResult ot_spi_device_buf_read_with_attrs(
     (void)attrs;
     uint32_t val32;
 
-    hwaddr last = addr + (hwaddr)(size - 1u);
+    hwaddr last = (hwaddr)((uint32_t)addr + size - 1u);
 
     if (addr < SPI_SRAM_INGRESS_OFFSET) {
         qemu_log_mask(LOG_GUEST_ERROR,
@@ -1965,7 +1964,7 @@ static MemTxResult ot_spi_device_buf_write_with_attrs(
     uint32_t pc = ibex_get_current_pc();
     trace_ot_spi_device_buf_write_in(s->ot_id, (uint32_t)addr, size, val32, pc);
 
-    hwaddr last = addr + (hwaddr)(size - 1u);
+    hwaddr last = (hwaddr)((uint32_t)addr + size - 1u);
 
     if (last >= SPI_SRAM_INGRESS_OFFSET) {
         qemu_log_mask(LOG_GUEST_ERROR,
